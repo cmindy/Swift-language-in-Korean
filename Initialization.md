@@ -110,5 +110,13 @@ struct Fahrenheit {
 }
 ```
 
+Customizing Initialization
+
+You can customize the initialization process with input parameters and optional property types, or by assigning constant properties during initialization, as described in the following sections.
+
+Initialization Parameters
+You can provide initialization parameters as part of an initializer’s definition, to define the types and names of values that customize the initialization process. Initialization parameters have the same capabilities and syntax as function and method parameters.
+
+The following example defines a structure called Celsius, which stores temperatures expressed in degrees Celsius. The Celsius structure implements two custom initializers called init(fromFahrenheit:) and init(fromKelvin:), which initialize a new instance of the structure with a value from a different temperature scale:
 
 
