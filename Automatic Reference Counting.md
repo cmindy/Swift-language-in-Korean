@@ -6,6 +6,14 @@ However, in a few cases ARC requires more information about the relationships be
 
 Reference counting applies only to instances of classes. Structures and enumerations are value types, not reference types, and are not stored and passed by reference.
 
+Swift는 ARC (Automatic Reference Counting)를 사용하여 앱의 메모리 사용을 추적하고 관리합니다. 대부분의 경우, 이는 Swift에서 메모리 관리가 "단지 작동합니다"는 것을 의미하며 메모리 관리에 대해 직접 생각할 필요가 없습니다. ARC는 클래스 인스턴스가 더 이상 필요하지 않을 때 클래스 인스턴스가 사용하는 메모리를 자동으로 비 웁니다.
+
+그러나 몇 가지 경우 ARC는 메모리를 관리하기 위해 코드 부분 간의 관계에 대한 추가 정보가 필요합니다. 이 장에서는 이러한 상황에 대해 설명하고 ARC가 모든 앱의 메모리를 관리하는 방법을 보여줍니다. Swift에서 ARC를 사용하는 것은 Objective-C와 함께 ARC를 사용하기 위해 ARC 릴리스 노트로 전환에서 설명한 방법과 매우 유사합니다.
+
+참조 카운팅은 클래스의 인스턴스에만 적용됩니다. 구조와 열거 형은 참조 유형이 아닌 값 유형이며 참조로 저장되고 전달되지 않습니다.
+
+
+
 ## How ARC Works
 
 Every time you create a new instance of a class, ARC allocates a chunk of memory to store information about that instance. This memory holds information about the type of the instance, together with the values of any stored properties associated with that instance.
