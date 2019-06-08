@@ -35,3 +35,69 @@ To make this possible, whenever you assign a class instance to a property, const
 여전히 인스턴스가 필요하지 않을 때 사라지지 않도록 ARC는 현재 각 클래스 인스턴스를 참조하는 속성, 상수 및 변수의 수를 추적합니다. ARC는 해당 인스턴스에 대한 활성 참조가 하나 이상 존재하는 한 인스턴스의 할당을 해제하지 않습니다.
 
 이를 가능하게하려면 클래스 인스턴스를 속성, 상수 또는 변수에 할당 할 때마다 해당 속성, 상수 또는 변수가 인스턴스에 대한 강력한 참조를 만듭니다. 이 참조는 해당 인스턴스를 확고하게 유지하기 때문에 "강력한"참조라고하며 강력한 참조가 남아있는 한 해당 인스턴스의 할당을 해제 할 수 없으므로 참조하십시오.
+
+
+
+## ARC in Action
+
+Here’s an example of how Automatic Reference Counting works. This example starts with a simple class called `Person`, which defines a stored constant property called `name`:
+
+```swift
+class Person {
+    let name: String
+    init(name: String) {
+        self.name = name
+        print("\(name) is being initialized")
+    }
+    deinit {
+        print("\(name) is being deinitialized")
+    }
+}
+```
+
+
+
+The `Person` class has an initializer that sets the instance’s `name` property and prints a message to indicate that initialization is underway. The `Person` class also has a deinitializer that prints a message when an instance of the class is deallocated.
+
+The next code snippet defines three variables of type `Person?`, which are used to set up multiple references to a new `Person` instance in subsequent code snippets. Because these variables are of an optional type (`Person?`, not `Person`), they are automatically initialized with a value of `nil`, and do not currently reference a `Person` instance.
+
+```swift
+var reference1: Person? 
+var reference2: Person? 
+var reference3: Person? 
+```
+
+You can now create a new `Person` instance and assign it to one of these three variables:
+
+```swift
+reference1 = Person(name: "John Appleseed")
+// Prints "John Appleseed is being initialized"
+```
+
+Note that the message `"John Appleseed is being initialized"` is printed at the point that you call the `Person` class’s initializer. This confirms that initialization has taken place.
+
+Because the new `Person` instance has been assigned to the `reference1` variable, there is now a strong reference from `reference1` to the new `Person` instance. Because there is at least one strong reference, ARC makes sure that this `Person` is kept in memory and is not deallocated.
+
+If you assign the same `Person` instance to two more variables, two more strong references to that instance are established:
+
+```swift
+reference2 = reference1
+reference3 = reference1
+```
+
+There are now *three* strong references to this single `Person` instance.
+
+If you break two of these strong references (including the original reference) by assigning `nil` to two of the variables, a single strong reference remains, and the `Person` instance is not deallocated:
+
+```swift
+reference1 = nil
+reference2 = nil
+```
+
+ARC does not deallocate the `Person` instance until the third and final strong reference is broken, at which point it’s clear that you are no longer using the `Person` instance:
+
+```swift
+reference3 = nil
+// Prints "John Appleseed is being deinitialized"
+```
+
