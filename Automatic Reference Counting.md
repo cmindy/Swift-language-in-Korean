@@ -42,6 +42,8 @@ To make this possible, whenever you assign a class instance to a property, const
 
 Here’s an example of how Automatic Reference Counting works. This example starts with a simple class called `Person`, which defines a stored constant property called `name`:
 
+자동 참조 카운트가 어떻게 동작되는지에 대한 예제입니다. 이 예제는 상수 프로퍼티  `name` 을 정의하는  `Person` 클래스로 시작합니다.
+
 ```swift
 class Person {
     let name: String
@@ -59,7 +61,13 @@ class Person {
 
 The `Person` class has an initializer that sets the instance’s `name` property and prints a message to indicate that initialization is underway. The `Person` class also has a deinitializer that prints a message when an instance of the class is deallocated.
 
+`Person` 클래스는 인스턴스의 `name` 을 설정하고 초기화가 진행 중임을 나타내는 메시지를 인쇄하는 이니셜라이저가 있습니다. `Person` 클래스에는 클래스의 인스턴스가 할당 해제 될 때 메시지를 인쇄하는 deinitializer도 있습니다.
+
+
+
 The next code snippet defines three variables of type `Person?`, which are used to set up multiple references to a new `Person` instance in subsequent code snippets. Because these variables are of an optional type (`Person?`, not `Person`), they are automatically initialized with a value of `nil`, and do not currently reference a `Person` instance.
+
+다음 코드들은 `Person?` 유형의 세 가지 변수를 정의하며, 그 다음 코드들에서 새 `Person` 인스턴스에 대한 다중 참조를 설정하는 데 사용됩니다. 이러한 변수는 옵셔널 타입 (`Person`이 아닌 `Person?`)이기 때문에 값은 자동으로  `nil`로 초기화되고 지금은  `Person` 인스턴스를 참조하지 않습니다.
 
 ```swift
 var reference1: Person? 
@@ -68,6 +76,8 @@ var reference3: Person?
 ```
 
 You can now create a new `Person` instance and assign it to one of these three variables:
+
+이제 새 `Person` 인스턴스를 만들고 이 세 가지 변수 중 하나에 할당 할 수 있습니다.
 
 ```swift
 reference1 = Person(name: "John Appleseed")
@@ -78,7 +88,15 @@ Note that the message `"John Appleseed is being initialized"` is printed at the 
 
 Because the new `Person` instance has been assigned to the `reference1` variable, there is now a strong reference from `reference1` to the new `Person` instance. Because there is at least one strong reference, ARC makes sure that this `Person` is kept in memory and is not deallocated.
 
+``"John Appleseed is initialized"``라는 메시지는 `Person` 클래스의 이니셜라이저를 호출하는 시점에 프린트됩니다. 이것은 초기화가 수행되었음을 확인해줍니다.
+
+새로운 `Person` 인스턴스가 `reference1` 변수에 할당 되었기 때문에 `reference1`에서 새로운 `Person` 인스턴스로의 강한 참조가 있습니다. 적어도 하나의 강한 참조가 있으므로 ARC는 이 `Person`이 메모리에 남아 있고 할당이 해제되지 않았는지 확인합니다.
+
+
+
 If you assign the same `Person` instance to two more variables, two more strong references to that instance are established:
+
+동일한 `Person` 인스턴스를 두 개의 다른 변수에 할당하면 해당 인스턴스에 대한 강한 참조가 두 개 더 설정됩니다.
 
 ```swift
 reference2 = reference1
@@ -89,12 +107,18 @@ There are now *three* strong references to this single `Person` instance.
 
 If you break two of these strong references (including the original reference) by assigning `nil` to two of the variables, a single strong reference remains, and the `Person` instance is not deallocated:
 
+이제 이 한 `Person` 인스턴스에 대해 세 개의 강한 참조가 있습니다.
+
+두 개의 변수에 `nil`을 할당하여 이러한 강한 참조 중 두 개 (원래 참조 포함)를 끊으면 하나의 강한 참조가 유지되고 `Person` 인스턴스가 할당 해제되지 않습니다.
+
 ```swift
 reference1 = nil
 reference2 = nil
 ```
 
 ARC does not deallocate the `Person` instance until the third and final strong reference is broken, at which point it’s clear that you are no longer using the `Person` instance:
+
+ARC는 세 번째이자 가장 강한 참조가 깨질 때까지 `Person` 인스턴스를 할당 해제하지 않습니다. 이 때, 더 이상 `Person` 인스턴스를 사용하지 않는다는 것은 확실합니다.
 
 ```swift
 reference3 = nil
