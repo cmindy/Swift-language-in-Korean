@@ -137,6 +137,14 @@ You resolve strong reference cycles by defining some of the relationships betwee
 
 Here’s an example of how a strong reference cycle can be created by accident. This example defines two classes called `Person` and `Apartment`, which model a block of apartments and its residents:
 
+위의 예에서 ARC는 사용자가 작성한 새 `Person` 인스턴스에 대한 참조 수를 추적하고 더 이상 필요없는 `Person` 인스턴스를 할당 해제 할 수 있습니다.
+
+그러나 클래스의 인스턴스가 강한 참조가 0개가 될 수 없는 (즉, 강한 참조가 있을 수 밖에 없는) 코드를 작성할 수도 있습니다. 이것은 두 개의 클래스 인스턴스가 서로에 대한 강한 참조를 보유하여 각 인스턴스가 다른 인스턴스를 활성 상태로 유지하는 경우에 발생할 수 있습니다. 이를 강한 참조 싸이클이라고합니다.
+
+클래스 사이의 관계 중 일부를 강한 참조가 아닌 weak 또는 unowned 참조로 정의하여 강한 참조주기를 해결할 수 있습니다. 이 프로세스는 [클래스 인스턴스 간 강한 참조 싸이클 해결](https://docs.swift.org/swift-book/LanguageGuide/AutomaticReferenceCounting.html#ID52)에서 설명합니다. 그러나 강한 참조 싸이클을 해결하는 방법을 배우기 전에 그러한 주기가 어떻게 발생 하는지를 이해하는 것이 좋습니다.
+
+우연하게 강한 참조 싸이클이 만들어지는 예제입니다. 이 예제는 아파트 블록과 그 거주자를 모델링하는 `Person` 클래스와 `Apartment `클래스를 정의합니다.
+
 ```swift
 class Person {
     let name: String
@@ -161,12 +169,22 @@ Both of these classes also define a deinitializer, which prints the fact that an
 
 This next code snippet defines two variables of optional type called `john` and `unit4A`, which will be set to a specific `Apartment` and `Person` instance below. Both of these variables have an initial value of `nil`, by virtue of being optional:
 
+모든 `Person` 인스턴스에는 `String` 유형의 `name` 프로퍼티와 초기값은 `nil` 인 옵셔널 `apartment` 프로퍼티가 있습니다. 사람이 항상 아파트가 있는 것은 아니기 때문에 아파트 속성은 옵셔널입니다.
+
+마찬가지로 모든 `Apartment` 인스턴스에는 `String` 유형의 `unit` 속성이 있으며 초기에는 `nill` 인 선택적 `tenant`(세입자) 속성이 있습니다. 아파트에 항상 세입자가 있는 것은 아니기 때문에 세입자 프로퍼티는 옵셔널입니다.
+
+이 두 클래스 모두 해당 클래스의 인스턴스가 할당 해제된다는 사실을 인쇄하는 deinitializer를 정의합니다.이렇게하면 `Person` 및 `Apartment의` 인스턴스가 예상대로 할당 해제되는지 여부를 확인할 수 있습니다.
+
+다음 코드들은 `john` 및 `unit4A` 라는 두 가지 옵셔널 타입의 변수를 정의합니다. 이 변수는 아래의 특정 `Apartment` 및 `Person` 인스턴스로 설정될 것입니다. 두 변수의 초기값은 옵셔널의 초기값인  `nil` 입니다.
+
 ```swift
 var john: Person?
 var unit4A: Apartment?
 ```
 
 You can now create a specific `Person` instance and `Apartment` instance and assign these new instances to the `john` and `unit4A` variables:
+
+이제 특정 `Person` 인스턴스 및 `Apartment` 인스턴스를 생성하고 이러한 새 인스턴스를` john` 및 `unit4A` 변수에 할당할 수 있습니다.
 
 ```swift
 john = Person(name: "John Appleseed")
@@ -175,9 +193,13 @@ unit4A = Apartment(unit: "4A")
 
 Here’s how the strong references look after creating and assigning these two instances. The `john` variable now has a strong reference to the new `Person` instance, and the `unit4A`variable has a strong reference to the new `Apartment` instance:
 
+이 두 인스턴스를 만들고 할당하면 강한 참조가 다음과 같이 표시됩니다. 이제 `john` 변수는 새 `Person` 인스턴스를 강하게 참조합니다. `unit4A` 변수는 새 `Apartment` 인스턴스를 강하게 참조합니다.
+
 ![](https://docs.swift.org/swift-book/_images/referenceCycle01_2x.png)
 
 You can now link the two instances together so that the person has an apartment, and the apartment has a tenant. Note that an exclamation mark (`!`) is used to unwrap and access the instances stored inside the `john` and `unit4A` optional variables, so that the properties of those instances can be set:
+
+이제 두 인스턴스를 서로 연결하여 사람이 아파트를 가지고 있고 아파트가 입주자를 갖도록 할 수 있습니다. 느낌표(`!`)를 사용하여 `john` 및 `unit4A`  옵셔널 변수 내에 저장된 인스턴스의 포장을 풀고 액세스함으로써 해당 인스턴스의 속성을 설정할 수 있습니다.
 
 ```swift
 john!.apartment = unit4A
@@ -186,21 +208,33 @@ unit4A!.tenant = john
 
 Here’s how the strong references look after you link the two instances together:
 
+두 인스턴스를 서로 연결하고 나서 강한 참조는 아래 그림과 같이 됩니다.
+
 ![](https://docs.swift.org/swift-book/_images/referenceCycle02_2x.png)
 
 Unfortunately, linking these two instances creates a strong reference cycle between them. The `Person` instance now has a strong reference to the `Apartment` instance, and the `Apartment` instance has a strong reference to the `Person` instance. Therefore, when you break the strong references held by the `john` and `unit4A` variables, the reference counts do not drop to zero, and the instances are not deallocated by ARC:
+
+불행하게도 이 두 인스턴스를 연결하면 두 인스턴스 간에 강한 참조 싸이클이 생성됩니다.  `Person` 인스턴스는 `Apartment` 인스턴스를 강하게 참조하고, `Apartment` 인스턴스는 `Person` 인스턴스를 강하게 참조합니다. 따라서 `john` 및 `unit4A` 변수에 의해 유지되는 강한 참조를 해제해도 참조 수가 0으로 감소하지 않으며 인스턴스는 ARC에 의해 할당 취소되지 않습니다.
 
 ```swift
 john = nil
 unit4A = nil
 ```
 
+
+
 Note that neither deinitializer was called when you set these two variables to `nil`. The strong reference cycle prevents the `Person` and `Apartment` instances from ever being deallocated, causing a memory leak in your app.
 
 Here’s how the strong references look after you set the `john` and `unit4A` variables to `nil`:
+
+이 두 변수를 `nil` 로 설정하면 deinitializer도 호출되지 않습니다. 강한 참조 싸이클은 `Person` 및 `Apartment` 인스턴스가 할당 해제되는 것을 방지하여 앱에서 메모리 누수를 유발합니다.
+
+다음은 `john` 및 `unit4A` 변수를 `nil로` 설정 한 후 강한 참조는 아래 그림과 같이 됩니다.
 
 ![](https://docs.swift.org/swift-book/_images/referenceCycle03_2x.png)
 
 
 
 The strong references between the `Person` instance and the `Apartment` instance remain and cannot be broken.
+
+`Person` 인스턴스와 `Apartment` 인스턴스 사이의 강한 참조는 유지되며 깨뜨릴 수가 없습니다.
