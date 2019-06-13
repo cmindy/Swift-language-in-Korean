@@ -1,3 +1,5 @@
+[TOC]
+
 # Automatic Reference Counting
 
 Swift uses *Automatic Reference Counting* (ARC) to track and manage your app’s memory usage. In most cases, this means that memory management “just works” in Swift, and you do not need to think about memory management yourself. ARC automatically frees up the memory used by class instances when those instances are no longer needed.
@@ -12,7 +14,7 @@ Swift는 ARC (Automatic Reference Counting)를 사용하여 앱의 메모리 사
 
 참조 카운팅은 클래스의 인스턴스에만 적용됩니다. 구조체와 열거형은 참조 타입이 아닌 값 타입이며 참조로 저장되고 전달되지 않습니다.
 
-
+<br />
 
 ## How ARC Works
 
@@ -36,7 +38,7 @@ To make this possible, whenever you assign a class instance to a property, const
 
 이를 가능하게하려면 클래스 인스턴스를 속성, 상수 또는 변수에 할당 할 때마다 해당 속성, 상수 또는 변수가 인스턴스에 대한 강한 참조를 만듭니다. 이 참조는 해당 인스턴스를 확고하게 유지하기 때문에 "강한"참조라고하며 강한 참조가 남아있는 한 해당 인스턴스의 할당을 해제 할 수 없습니다.
 
-
+<br />
 
 ## ARC in Action
 
@@ -125,7 +127,7 @@ reference3 = nil
 // Prints "John Appleseed is being deinitialized"
 ```
 
-
+<br />
 
 ## Strong Reference Cycles Between Class Instances
 
@@ -238,3 +240,74 @@ Here’s how the strong references look after you set the `john` and `unit4A` va
 The strong references between the `Person` instance and the `Apartment` instance remain and cannot be broken.
 
 `Person` 인스턴스와 `Apartment` 인스턴스 사이의 강한 참조는 유지되며 깨뜨릴 수가 없습니다.
+
+
+
+## Resolving Strong Reference Cycles Between Class Instances
+
+Swift provides two ways to resolve strong reference cycles when you work with properties of class type: weak references and unowned references.
+
+Weak and unowned references enable one instance in a reference cycle to refer to the other instance *without* keeping a strong hold on it. The instances can then refer to each other without creating a strong reference cycle.
+
+Use a weak reference when the other instance has a shorter lifetime—that is, when the other instance can be deallocated first. In the `Apartment` example above, it’s appropriate for an apartment to be able to have no tenant at some point in its lifetime, and so a weak reference is an appropriate way to break the reference cycle in this case. In contrast, use an unowned reference when the other instance has the same lifetime or a longer lifetime.
+
+### Weak References
+
+A *weak reference* is a reference that does not keep a strong hold on the instance it refers to, and so does not stop ARC from disposing of the referenced instance. This behavior prevents the reference from becoming part of a strong reference cycle. You indicate a weak reference by placing the `weak` keyword before a property or variable declaration.
+
+Because a weak reference does not keep a strong hold on the instance it refers to, it’s possible for that instance to be deallocated while the weak reference is still referring to it. Therefore, ARC automatically sets a weak reference to `nil` when the instance that it refers to is deallocated. And, because weak references need to allow their value to be changed to `nil`at runtime, they are always declared as variables, rather than constants, of an optional type.
+
+You can check for the existence of a value in the weak reference, just like any other optional value, and you will never end up with a reference to an invalid instance that no longer exists.
+
+NOTE
+
+Property observers aren’t called when ARC sets a weak reference to `nil`.
+
+The example below is identical to the `Person` and `Apartment` example from above, with one important difference. This time around, the `Apartment` type’s `tenant` property is declared as a weak reference:
+
+ ```swift
+var john: Person?
+var unit4A: Apartment?
+
+john = Person(name: "John Appleseed")
+unit4A = Apartment(unit: "4A")
+
+john!.apartment = unit4A
+unit4A!.tenant = john
+ ```
+
+
+
+Here’s how the references look now that you’ve linked the two instances together:
+
+![ ](https://docs.swift.org/swift-book/_images/weakReference01_2x.png)
+
+The `Person` instance still has a strong reference to the `Apartment` instance, but the `Apartment` instance now has a *weak* reference to the `Person` instance. This means that when you break the strong reference held by the `john` variable by setting it to `nil`, there are no more strong references to the `Person` instance:
+
+```swift
+john = nil 
+// Prints "John Appleseed is being deinitialized" 
+```
+
+Because there are no more strong references to the `Person` instance, it’s deallocated and the `tenant` property is set to `nil`:
+
+
+
+The only remaining strong reference to the `Apartment` instance is from the `unit4A` variable. If you break *that* strong reference, there are no more strong references to the `Apartment`instance:
+
+![weakReference02_2x](https://docs.swift.org/swift-book/_images/weakReference02_2x.png)
+
+```swift
+unit4A = nil 
+// Prints "Apartment 4A is being deinitialized" 
+```
+
+
+
+Because there are no more strong references to the `Apartment` instance, it too is deallocated:
+
+![weakReference03_2x](https://docs.swift.org/swift-book/_images/weakReference03_2x.png)
+
+> NOTE
+>
+> In systems that use garbage collection, weak pointers are sometimes used to implement a simple caching mechanism because objects with no strong references are deallocated only when memory pressure triggers garbage collection. However, with ARC, values are deallocated as soon as their last strong reference is removed, making weak references unsuitable for such a purpose.
