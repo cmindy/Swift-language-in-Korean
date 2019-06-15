@@ -251,6 +251,12 @@ Weak and unowned references enable one instance in a reference cycle to refer to
 
 Use a weak reference when the other instance has a shorter lifetime—that is, when the other instance can be deallocated first. In the `Apartment` example above, it’s appropriate for an apartment to be able to have no tenant at some point in its lifetime, and so a weak reference is an appropriate way to break the reference cycle in this case. In contrast, use an unowned reference when the other instance has the same lifetime or a longer lifetime.
 
+Swift는 클래스 형식의 프로퍼티로 작업 할 때 강한 참조 싸이클을 해결하는 두 가지 방법, weak 참조 및 unowned 참조를 제공합니다.
+
+weak와 unowned 참조는 참조 싸이클의 한 인스턴스가 다른 인스턴스를 강하게 잡고있지 않고 참조할 수 있게합니다. 그런 다음 인스턴스는 강한 참조 싸이클을 만들지 않고도 서로를 참조할 수 있습니다.
+
+다른 인스턴스의 수명이 짧을 때 (즉, 다른 인스턴스를 먼저 할당 해제 할 수 있을 때) 약한 참조를 사용하십시오. 위의 `Apartment` 예제에서는 아파트가 평생동안 세입자를 가질 수는 없기 때문에 이 경우에는 약한 참조가 참조 싸이클을 끊는 적절한 방법입니다. 반대로 다른 인스턴스의 수명이 같거나 수명이 긴 경우에는 unowned 참조를 사용하십시오.
+
 ### Weak References
 
 A *weak reference* is a reference that does not keep a strong hold on the instance it refers to, and so does not stop ARC from disposing of the referenced instance. This behavior prevents the reference from becoming part of a strong reference cycle. You indicate a weak reference by placing the `weak` keyword before a property or variable declaration.
@@ -259,11 +265,42 @@ Because a weak reference does not keep a strong hold on the instance it refers t
 
 You can check for the existence of a value in the weak reference, just like any other optional value, and you will never end up with a reference to an invalid instance that no longer exists.
 
-NOTE
+약한 참조는 참조하는 인스턴스를 강하게 갖지 않는 참조이며, ARC가 참조된 인스턴스를 삭제하는 것을 막지 않습니다. 이 동작은 참조가 강한 참조 싸이클의 일부가 되지 않도록 합니다. weak 키워드는 프로퍼티 또는 변수 선언 앞에 사용해서 약한 참조를 나타냅니다.
 
-Property observers aren’t called when ARC sets a weak reference to `nil`.
+약한 참조가 참조하는 인스턴스를 강하게 잡지 않으므로 약한 참조가 계속 참조하는 동안에도 해당 인스턴스가 할당 해제 될 수 있습니다.  참조하는 인스턴스가 할당 해제되면 ARC는 약한 참조를 nil로 자동 설정합니다. 그리고 약한 참조는 그 값을 런타임시 변경되도록 허용해야하기 때문에 항상 옵셔널 유형의 변수로 선언됩니다.(상수가 아닙니다.)
+
+ 다른 옵셔널 값과 마찬가지로 약한 참조에서도 값이 있는지 없는지 확인할 수 있으며 더 이상 존재하지 않는 잘못된 인스턴스에 대한 참조로 끝나는 일은 없습니다.
+
+>  NOTE
+>
+> Property observers aren’t called when ARC sets a weak reference to `nil`.
+
+> NOTE
+>
+> 프로퍼티 옵저버는 ARC가 약한 참조를 `nil` 로 설정하면 호출되지 않습니다.
 
 The example below is identical to the `Person` and `Apartment` example from above, with one important difference. This time around, the `Apartment` type’s `tenant` property is declared as a weak reference:
+
+아래의 예제는 위의 `Person` 및 `Apartment` 예제와 동일하지만 중요한 차이점이 하나 있습니다. 이번에는 `Apartment` 유형의 `tenant` 속성이 약한 참조로 선언됩니다.
+
+```swift
+class Person {
+    let name: String
+    init(name: String) { self.name = name }
+    var apartment: Apartment?
+    deinit { print("\(name) is being deinitialized") }
+}
+
+class Apartment {
+    let unit: String
+    init(unit: String) { self.unit = unit }
+    weak var tenant: Person?
+    deinit { print("Apartment \(unit) is being deinitialized") }
+```
+
+The strong references from the two variables (`john` and `unit4A`) and the links between the two instances are created as before:
+
+두 변수 (`john` 및 `unit4A`)의 강한 참조와 두 인스턴스 간의 연결은 이전과 같이 만들어집니다.
 
  ```swift
 var john: Person?
@@ -280,9 +317,13 @@ unit4A!.tenant = john
 
 Here’s how the references look now that you’ve linked the two instances together:
 
+다음은 두 인스턴스를 함께 연결했을 때 참조가 어떻게 되는지 보여줍니다.
+
 ![ ](https://docs.swift.org/swift-book/_images/weakReference01_2x.png)
 
 The `Person` instance still has a strong reference to the `Apartment` instance, but the `Apartment` instance now has a *weak* reference to the `Person` instance. This means that when you break the strong reference held by the `john` variable by setting it to `nil`, there are no more strong references to the `Person` instance:
+
+이전과 같이 `Person` 인스턴스는 `Apartment` 인스턴스와 강한 참조를 갖고 있습니다. 그러나 `Apartment` 인스턴스는 `Person` 인스턴스와 약한 참조를 갖고 있습니다. 이것은 `john` 변수를 `nil`로 설정하면서 갖고 있던 강한 참조를 끊을 수 있다는 것을 뜻합니다. `Person` 인스턴스에는 더 이상 강한 참조가 없게 됩니다.
 
 ```swift
 john = nil 
@@ -291,11 +332,15 @@ john = nil
 
 Because there are no more strong references to the `Person` instance, it’s deallocated and the `tenant` property is set to `nil`:
 
+왜냐하면 `Person` 인스턴스에는 더이상 강한 참조가 남아있지 않기 때문에 할당이 해제되고  `tenant` 프로퍼티를 `nil` 로 설정합니다.
 
+
+
+![weakReference02_2x](https://docs.swift.org/swift-book/_images/weakReference02_2x.png)
 
 The only remaining strong reference to the `Apartment` instance is from the `unit4A` variable. If you break *that* strong reference, there are no more strong references to the `Apartment`instance:
 
-![weakReference02_2x](https://docs.swift.org/swift-book/_images/weakReference02_2x.png)
+`Apartment` 인스턴스에 남아있는 유일한 강한 참조는 `unit4A` 변수로 생긴 강한 참조입니다. 만약 이 강한 참조를 깨면, `Apartment` 인스턴스에는 더이상 강한 참조가 존재하지 않게 됩니다. 
 
 ```swift
 unit4A = nil 
@@ -306,8 +351,14 @@ unit4A = nil
 
 Because there are no more strong references to the `Apartment` instance, it too is deallocated:
 
+`Apartment` 인스턴스에는 더 이상 남아있는 강한 참조가 없기 때문에 이 인스턴스 또한 할당 해제됩니다.
+
 ![weakReference03_2x](https://docs.swift.org/swift-book/_images/weakReference03_2x.png)
 
 > NOTE
 >
 > In systems that use garbage collection, weak pointers are sometimes used to implement a simple caching mechanism because objects with no strong references are deallocated only when memory pressure triggers garbage collection. However, with ARC, values are deallocated as soon as their last strong reference is removed, making weak references unsuitable for such a purpose.
+
+> NOTE
+>
+> 가비지 콜렉션을 사용하는 시스템에서는 약한 포인터가 간단한 캐싱 메커니즘을 구현하기 위해 사용되기도 합니다. 메모리 참조가 가비지 수집을 발생시킬 때만 강한 참조가 없는 객체의 할당이 해제되기 때문입니다. 그러나 ARC를 사용하면 마지막 강한 참조가 제거 되 자마자 값이 할당 해제되므로 약한 참조를 만드는 것은 이런 목적에 적합하지 않습니다.
