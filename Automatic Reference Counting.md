@@ -383,7 +383,27 @@ The relationship between `Customer` and `CreditCard` is slightly different from 
 
 Furthermore, a new `CreditCard` instance can *only* be created by passing a `number` value and a `customer` instance to a custom `CreditCard` initializer. This ensures that a `CreditCard`instance always has a `customer` instance associated with it when the `CreditCard` instance is created.
 
+약한 참조와 마찬가지로 unowned 참조가 참조하는 인스턴스를 강하게 잡지 않습니다. 그러나 약한 참조와 달리 다른 인스턴스의 수명이 같거나 수명이 긴 경우에는 unowned 참조가 사용됩니다. 프로퍼티 또는 변수 선언 앞에 `unowned` 키워드를 배치하여 unowned 참조를 나타냅니다.
+
+unowned 참조는 항상 값을 가질 것으로 예상됩니다. 결과적으로 ARC는 unowned 참조의 값을 nil로 설정하지 않습니다. 즉, unowned 참조는 논옵셔널 타입을 사용하여 정의됩니다.
+
+> IMPORTANT
+>
+> 해당 참조가 항상 할당 해제되지 않은 인스턴스를 참조하는 경우에만 unowned 참조를 사용하십시오.
+>
+> 해당 인스턴스의 할당이 해제 된 후 unowned 참조의 값에 액세스하려고하면 런타임 오류가 발생합니다.
+
+다음 예제는 은행 고객 및 해당 고객에 대해 가능한 신용 카드를 모델링하는 두 클래스, `Customer` 및 `CreditCard`를 정의합니다. 이 두 클래스는 각각 다른 클래스의 인스턴스를 프로퍼티로 저장합니다. 이 관계는 강한 참조 싸이클을 만들 가능성이 있습니다.
+
+`Customer`와 `CreditCard` 간의 관계는 위의 약한 참조 예에서 볼 수있는 `Apartment`와 `Person`의 관계와 약간 다릅니다. 이 데이터 모델에서는 고객에게 신용 카드가 있거나 없을 수도 있지만 신용 카드는 항상 고객과 연결됩니다. `CreditCard` 인스턴스는 참조하는 고객의 수명을 초과하지 않습니다. 이를 나타 내기 위해 `Customer` 클래스에는 선택적 `card` 속성이 있지만 `CreditCard` 클래스에는 unowned (그리고 옵셔널이 아닌) 고객 프로퍼티가 있습니다.
+
+또한 새 `CreditCard` 인스턴스는 `number` 값과 `customer` 인스턴스를 커스텀 `CreditCard` 이니셜라이저에 전달해서만 만들 수 있습니다. 이렇게하면 `CreditCard` 인스턴스가 생성 될 때 `CreditCard` 인스턴스에 항상 연결된 `customer` 인스턴스가 생성됩니다.
+
+
+
 Because a credit card will always have a customer, you define its `customer` property as an unowned reference, to avoid a strong reference cycle:
+
+신용 카드에는 항상 고객이 있기 때문에 강한 참조 싸이클을 피하기 위해 고객 속성을 unowned 참조로 정의합니다.
 
 ```swift
 class Customer {
@@ -412,13 +432,21 @@ class CreditCard {
 >
 > The `number` property of the `CreditCard` class is defined with a type of `UInt64` rather than `Int`, to ensure that the `number` property’s capacity is large enough to store a 16-digit card number on both 32-bit and 64-bit systems.
 
+> NOTE
+>
+> `CreditCard` 클래스의 `number` 속성은 `number` 속성의 용량이 32 비트 및 64 비트 시스템에서 16 자리 카드 번호를 저장할 수 있을만큼 충분히 넓도록 `Int`가 아닌 `UInt64` 형식으로 정의됩니다.
+
 This next code snippet defines an optional `Customer` variable called `john`, which will be used to store a reference to a specific customer. This variable has an initial value of nil, by virtue of being optional:
+
+이 다음 코드 조각은 `john`이라는`Customer` 변수를 정의합니다. 이 변수는 특정 고객에 대한 참조를 저장하는데 사용됩니다. 이 변수는 옵셔널이기 때문에 초기 값은 `nil` 입니다.
 
 ```swift
 var john: Customer? 
 ```
 
 You can now create a `Customer` instance, and use it to initialize and assign a new `CreditCard` instance as that customer’s `card` property:
+
+이제 `Customer` 인스턴스를 만들고 이 인스턴스를 사용하여 새 `CreditCard` 인스턴스를 초기화하고 해당 고객의 `card` 프로퍼티로 할당 할 수 있습니다.
 
 ```swift
 john = Customer(name: "John Appleseed") 
@@ -427,15 +455,24 @@ john!.card = CreditCard(number: 1234_5678_9012_3456, customer: john!)
 
 Here’s how the references look, now that you’ve linked the two instances:
 
+다음은 두 인스턴스를 연결했을 때 참조가 어떻게 보이는지를 보여줍니다.
+
 ![unownedReference01_2x](https://docs.swift.org/swift-book/_images/unownedReference01_2x.png)
 
 The `Customer` instance now has a strong reference to the `CreditCard` instance, and the `CreditCard` instance has an unowned reference to the `Customer` instance.
 
 Because of the unowned `customer` reference, when you break the strong reference held by the `john` variable, there are no more strong references to the `Customer` instance:
 
+이제 `Customer` 인스턴스는 `CreditCard` 인스턴스에 대한 강한 참조를 가지며 `CreditCard` 인스턴스에는 `Customer` 인스턴스에 대한 unowned 참조가 있습니다. 
+
+`john` 변수가 보유한 강한 참조를 중단하면, unowned `customer` 참조 때문에 `Customer` 인스턴스에 대한 더 이상 강한 참조가 없습니다.
+
 ![unownedReference02_2x](https://docs.swift.org/swift-book/_images/unownedReference02_2x.png)
 
 Because there are no more strong references to the `Customer` instance, it’s deallocated. After this happens, there are no more strong references to the `CreditCard` instance, and it too is deallocated:
+
+`Customer` 인스턴스에 대한 더 이상 강한 참조가 없으므로 할당이 해제됩니다. 그런 다음 `CreditCard` 인스턴스에도 더 이상 강한 참조가 없어 할당이 해제됩니다.
+
 ```swift
 john = nil 
 // Prints "John Appleseed is being deinitialized" 
@@ -444,8 +481,17 @@ john = nil
 
 The final code snippet above shows that the deinitializers for the `Customer` instance and `CreditCard` instance both print their “deinitialized” messages after the `john` variable is set to `nil`.
 
+위의 마지막 코드 조각은 `john` 변수를 `nil`로 설정하고 난 후 `Customer` 인스턴스와 `CreditCard` 인스턴스에 대한 deinitializers가 "deinitialized" 메시지를 출력하는 것을 보여줍니다.
+
 >  NOTE
 >
 > The examples above show how to use *safe* unowned references. Swift also provides *unsafe*unowned references for cases where you need to disable runtime safety checks—for example, for performance reasons. As with all unsafe operations, you take on the responsibility for checking that code for safety.
 >
 > You indicate an unsafe unowned reference by writing `unowned(unsafe)`. If you try to access an unsafe unowned reference after the instance that it refers to is deallocated, your program will try to access the memory location where the instance used to be, which is an unsafe operation.
+
+> NOTE
+>
+> 위의 예는 어떻게 *안전한* unowned 참조를 사용하는지 보여줍니다. 또한 Swift는 성능상의 이유로 런타임 안전성 검사를 비활성화해야하는 경우 *안전하지 않은* unowned참조를 제공합니다. 모든 안전하지 않은 작업과 마찬가지로 안전을 위해 해당 코드를 확인해야합니다.
+>
+> `unowned (안전하지 않은) ` 키워드를 써서 안전하지 않은 unowned 참조를 나타냅니다. 참조하는 인스턴스가 할당 해제 된 후 안전하지 않은 unowned 참조에 액세스하려고 시도하면 프로그램은 예전의 메모리 위치 (안전하지 않은 작업)에 액세스하려고 시도합니다.
+
